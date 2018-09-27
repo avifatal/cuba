@@ -1800,8 +1800,8 @@ public abstract class WebAbstractTable<T extends com.vaadin.v7.ui.Table & CubaEn
                 if (width > -1)
                     colElem.addAttribute("width", String.valueOf(width));
 
-                Boolean visible = !component.isColumnCollapsed(column);
-                colElem.addAttribute("visible", visible.toString());
+                boolean visible = !component.isColumnCollapsed(column);
+                colElem.addAttribute("visible", Boolean.toString(visible));
             }
 
             settingsChanged = true;
@@ -1810,11 +1810,11 @@ public abstract class WebAbstractTable<T extends com.vaadin.v7.ui.Table & CubaEn
         if (isSettingsSortPropertyChanged(settingsSortProperty, settingsSortAscending) || commonSettingsChanged) {
             MetaPropertyPath sortProperty = (MetaPropertyPath) component.getSortContainerPropertyId();
             if (sortProperty != null) {
-                Boolean sortAscending = component.isSortAscending();
+                boolean sortAscending = component.isSortAscending();
 
                 if (columnsElem != null) {
                     columnsElem.addAttribute("sortProperty", sortProperty.toString());
-                    columnsElem.addAttribute("sortAscending", sortAscending.toString());
+                    columnsElem.addAttribute("sortAscending", Boolean.toString(sortAscending));
 
                     settingsChanged = true;
                 }
