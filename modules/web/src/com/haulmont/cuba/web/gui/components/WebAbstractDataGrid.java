@@ -97,7 +97,7 @@ import static com.haulmont.cuba.gui.ComponentsHelper.findActionById;
 
 public abstract class WebAbstractDataGrid<C extends Grid<E> & CubaEnhancedGrid<E>, E extends Entity>
         extends WebAbstractComponent<C>
-        implements DataGrid<E>, SecuredActionsHolder, LookupComponent.LookupSelectionChangeNotifier,
+        implements DataGrid<E>, SecuredActionsHolder, LookupComponent.LookupSelectionChangeNotifier<E>,
         DataGridSourceEventsDelegate<E>, HasInnerComponents, InitializingBean {
 
     protected static final String HAS_TOP_PANEL_STYLE_NAME = "has-top-panel";
@@ -552,8 +552,11 @@ public abstract class WebAbstractDataGrid<C extends Grid<E> & CubaEnhancedGrid<E
     }
 
     @Override
-    public void setLookupSelectHandler(Runnable selectHandler) {
-        Consumer<Action.ActionPerformedEvent> actionHandler = event -> selectHandler.run();
+    public void setLookupSelectHandler(Consumer<Collection<E>> selectHandler) {
+        Consumer<Action.ActionPerformedEvent> actionHandler = event ->  {
+            Set<E> selected = getSelected();
+            selectHandler.accept(selected);
+        };
 
         setEnterPressAction(new BaseAction(Window.Lookup.LOOKUP_ENTER_PRESSED_ACTION_ID)
                 .withHandler(actionHandler));
@@ -563,7 +566,7 @@ public abstract class WebAbstractDataGrid<C extends Grid<E> & CubaEnhancedGrid<E
     }
 
     @Override
-    public Collection getLookupSelectedItems() {
+    public Collection<E> getLookupSelectedItems() {
         return getSelected();
     }
 
@@ -765,6 +768,15 @@ public abstract class WebAbstractDataGrid<C extends Grid<E> & CubaEnhancedGrid<E
     @Override
     public DataGridSource<E> getDataGridSource() {
         return this.dataBinding != null ? this.dataBinding.getDataGridSource() : null;
+    }
+
+    @Nullable
+    @Override
+    public MetaClass getBindingMetaClass() {
+        if (getDataGridSource() instanceof EntityDataGridSource) {
+            return ((EntityDataGridSource<E>) getDataGridSource()).getEntityMetaClass();
+        }
+        return null;
     }
 
     protected DataGridSource<E> getDataGridSourceNN() {
@@ -2448,14 +2460,16 @@ public abstract class WebAbstractDataGrid<C extends Grid<E> & CubaEnhancedGrid<E
         }
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    public Subscription addLookupValueChangeListener(Consumer<LookupSelectionChangeEvent> listener) {
-        return getEventHub().subscribe(LookupSelectionChangeEvent.class, listener);
+    public Subscription addLookupValueChangeListener(Consumer<LookupSelectionChangeEvent<E>> listener) {
+        return getEventHub().subscribe(LookupSelectionChangeEvent.class, (Consumer) listener);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    public void removeLookupValueChangeListener(Consumer<LookupSelectionChangeEvent> listener) {
-        unsubscribe(LookupSelectionChangeEvent.class, listener);
+    public void removeLookupValueChangeListener(Consumer<LookupSelectionChangeEvent<E>> listener) {
+        unsubscribe(LookupSelectionChangeEvent.class, (Consumer) listener);
     }
 
     @Override

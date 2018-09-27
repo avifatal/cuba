@@ -230,7 +230,7 @@ public class WindowConfig {
 
     protected void loadScreenConfigurations() {
         for (UiControllersConfiguration provider : configurations) {
-            List<UiControllerDefinition> uiControllers = provider.getUIControllers();
+            List<UiControllerDefinition> uiControllers = provider.getUiControllers();
 
             for (UiControllerDefinition definition : uiControllers) {
                 WindowInfo windowInfo = new WindowInfo(definition.getId(), windowAttributesProvider,
@@ -379,6 +379,7 @@ public class WindowConfig {
     }
 
     public String getEditorScreenId(MetaClass metaClass) {
+        // todo annotation
         return getMetaClassScreenId(metaClass, Window.EDITOR_WINDOW_SUFFIX);
     }
 
@@ -396,6 +397,8 @@ public class WindowConfig {
      * @throws NoSuchScreenException if the screen with specified ID is not registered
      */
     public WindowInfo getLookupScreen(Class<? extends Entity> entityClass) {
+        // todo annotation
+
         MetaClass metaClass = metadata.getSession().getClass(entityClass);
         String lookupScreenId = getAvailableLookupScreenId(metaClass);
         return getWindowInfo(lookupScreenId);

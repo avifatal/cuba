@@ -99,7 +99,7 @@ import static com.haulmont.bali.util.Preconditions.checkNotNullArgument;
 @SuppressWarnings("deprecation")
 public abstract class WebAbstractTable<T extends com.vaadin.v7.ui.Table & CubaEnhancedTable, E extends Entity>
         extends WebAbstractActionsHolderComponent<T>
-        implements Table<E>, TableSourceEventsDelegate<E>, LookupSelectionChangeNotifier, HasInnerComponents, InitializingBean {
+        implements Table<E>, TableSourceEventsDelegate<E>, LookupSelectionChangeNotifier<E>, HasInnerComponents, InitializingBean {
 
     public static final int MAX_TEXT_LENGTH_GAP = 10;
 
@@ -504,7 +504,7 @@ public abstract class WebAbstractTable<T extends com.vaadin.v7.ui.Table & CubaEn
         if (fieldDatasource == null) {
             fieldDatasource = DsBuilder.create()
                     .setAllowCommit(false)
-                    .setMetaClass(getDatasource().getMetaClass())  // vaadin8 rework
+                    .setMetaClass(getDatasource().getMetaClass())
                     .setRefreshMode(CollectionDatasource.RefreshMode.NEVER)
                     .setViewName("_local")
                     .buildDatasource();
@@ -1153,8 +1153,11 @@ public abstract class WebAbstractTable<T extends com.vaadin.v7.ui.Table & CubaEn
     }
 
     @Override
-    public void setLookupSelectHandler(Runnable selectHandler) {
-        Consumer<Action.ActionPerformedEvent> actionHandler = event -> selectHandler.run();
+    public void setLookupSelectHandler(Consumer<Collection<E>> selectHandler) {
+        Consumer<Action.ActionPerformedEvent> actionHandler = event ->  {
+            Set<E> selected = getSelected();
+            selectHandler.accept(selected);
+        };
 
         setEnterPressAction(
                 new BaseAction(Window.Lookup.LOOKUP_ENTER_PRESSED_ACTION_ID)
@@ -1168,7 +1171,7 @@ public abstract class WebAbstractTable<T extends com.vaadin.v7.ui.Table & CubaEn
     }
 
     @Override
-    public Collection getLookupSelectedItems() {
+    public Collection<E> getLookupSelectedItems() {
         return getSelected();
     }
 
@@ -1281,6 +1284,15 @@ public abstract class WebAbstractTable<T extends com.vaadin.v7.ui.Table & CubaEn
 
             refreshActionsState();
         }
+    }
+
+    @Nullable
+    @Override
+    public MetaClass getBindingMetaClass() {
+        if (getTableSource() instanceof EntityTableSource) {
+            return ((EntityTableSource<E>) getTableSource()).getEntityMetaClass();
+        }
+        return null;
     }
 
     protected List<Object> getPropertyColumns(EntityTableSource<E> entityTableSource, List<Column<E>> columnsOrder) {
@@ -2757,13 +2769,15 @@ public abstract class WebAbstractTable<T extends com.vaadin.v7.ui.Table & CubaEn
         return currentValue;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    public Subscription addLookupValueChangeListener(Consumer<LookupSelectionChangeEvent> listener) {
-        return getEventHub().subscribe(LookupSelectionChangeEvent.class, listener);
+    public Subscription addLookupValueChangeListener(Consumer<LookupSelectionChangeEvent<E>> listener) {
+        return getEventHub().subscribe(LookupSelectionChangeEvent.class, (Consumer) listener);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    public void removeLookupValueChangeListener(Consumer<LookupSelectionChangeEvent> listener) {
-        unsubscribe(LookupSelectionChangeEvent.class, listener);
+    public void removeLookupValueChangeListener(Consumer<LookupSelectionChangeEvent<E>> listener) {
+        unsubscribe(LookupSelectionChangeEvent.class, (Consumer) listener);
     }
 }

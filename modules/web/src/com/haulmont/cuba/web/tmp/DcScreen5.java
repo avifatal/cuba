@@ -18,14 +18,14 @@ package com.haulmont.cuba.web.tmp;
 
 import com.haulmont.cuba.core.global.DataManager;
 import com.haulmont.cuba.core.global.LoadContext;
-import com.haulmont.cuba.core.global.Metadata;
 import com.haulmont.cuba.gui.Dialogs;
+import com.haulmont.cuba.gui.EditorScreens;
 import com.haulmont.cuba.gui.Screens;
+import com.haulmont.cuba.gui.components.Actions;
 import com.haulmont.cuba.gui.components.Button;
 import com.haulmont.cuba.gui.components.DialogAction;
 import com.haulmont.cuba.gui.model.CollectionContainer;
 import com.haulmont.cuba.gui.model.CollectionLoader;
-import com.haulmont.cuba.gui.model.DataLoader;
 import com.haulmont.cuba.gui.screen.*;
 import com.haulmont.cuba.security.entity.Group;
 import com.haulmont.cuba.security.entity.User;
@@ -39,44 +39,57 @@ import java.util.UUID;
 public class DcScreen5 extends Screen {
 
     @Inject
-    protected Metadata metadata;
-
-    @Inject
     protected DataManager dataManager;
 
     @Inject
     protected Screens screens;
-
     @Inject
-    protected Editors editors;
-
+    protected EditorScreens editorScreens;
     @Inject
     protected Dialogs dialogs;
 
     @Inject
     private CollectionContainer<User> usersCont;
-
     @Inject
     private CollectionLoader usersLoader;
+
+    @Inject
+    private Actions actions;
 
     @Subscribe
     protected void beforeShow(BeforeShowEvent event) {
         getScreenData().loadAll();
     }
 
+/*
     @Subscribe("createBtn")
     private void onCreateClick(Button.ClickEvent event) {
-        editors.createEntity(usersCont, DcScreen6.class, this::initNewUser, null);
+        Screen editor = editorScreens.builder(User.class, this)
+                .newEntity()
+                .withContainer(usersCont)
+                .withInitializer(this::initNewUser)
+                .create();
+
+        editor.show();
     }
+*/
 
     protected void initNewUser(User user) {
-        Group group = dataManager.load(Group.class).id(UUID.fromString("0fa2b1a5-1d68-4d69-9fbd-dff348347f93")).one();
+        Group group = dataManager.load(Group.class)
+                .id(UUID.fromString("0fa2b1a5-1d68-4d69-9fbd-dff348347f93"))
+                .one();
         user.setGroup(group);
     }
 
     @Subscribe("editBtn")
     private void onEditClick(Button.ClickEvent event) {
-        editors.editEntity(usersCont, DcScreen6.class, null);
+        DcScreen6 editor = editorScreens.builder(User.class, this)
+                .editEntity(usersCont.getItem())
+                .withScreen(DcScreen6.class)
+                .withContainer(usersCont)
+                .create();
+
+        editor.show();
     }
 
     @Subscribe("removeBtn")
